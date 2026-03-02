@@ -1,1 +1,1 @@
-console.log("Hello Wold");
+const name = "";
