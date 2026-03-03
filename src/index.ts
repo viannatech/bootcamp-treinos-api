@@ -1,18 +1,57 @@
 import "dotenv/config";
-
+import fastifySwagger from "@fastify/swagger";
+import fastifySwaggerUI from "@fastify/swagger-ui";
 import Fastify from "fastify";
 import {
+  jsonSchemaTransform,
   serializerCompiler,
   validatorCompiler,
   ZodTypeProvider,
 } from "fastify-type-provider-zod";
 import z from "zod";
+
 const app = Fastify({
   logger: true,
+});
+const LOGIN_SCHEMA = z.object({
+  email: z.string().email(),
+  password: z.string().min(6),
 });
 
 app.setValidatorCompiler(validatorCompiler);
 app.setSerializerCompiler(serializerCompiler);
+
+await app.register(fastifySwagger, {
+  openapi: {
+    info: {
+      title: "Bootcamp Treinos API",
+      description: "API para o bootcamp de treinos do FSC",
+      version: "1.0.0",
+    },
+    servers: [
+      {
+        description: "Localhost",
+        url: "http://localhost:3000",
+      },
+    ],
+  },
+  transform: jsonSchemaTransform,
+});
+
+await app.register(fastifySwaggerUI, {
+  routePrefix: "/docs",
+});
+
+app.after(() => {
+  app.withTypeProvider<ZodTypeProvider>().route({
+    method: "POST",
+    url: "/login",
+    schema: { body: LOGIN_SCHEMA },
+    handler: (req, res) => {
+      res.send("ok");
+    },
+  });
+});
 
 app.withTypeProvider<ZodTypeProvider>().route({
   method: "GET",
